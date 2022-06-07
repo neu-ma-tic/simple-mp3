@@ -1,0 +1,92 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+<script src="https://cdn.jsdelivr.net/gh/ireade/Toast.js@master/dist/js/Toast.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ireade/Toast.js@master/dist/css/Toast.min.css">
+<style>
+    body > div > div {
+        background-color: #0c0e15 !important;
+    }
+    body > div > div > p {
+        color: #0063cc;
+    }
+
+    .toastjs-btn {
+        background-color: #0063cc;
+        color: #fff;
+    }
+</style>
+<script>
+window.onload = () => {
+  clear();
+  window.addEventListener("paste", (event) => {
+    clipboardData = event.clipboardData || window.clipboardData;
+    pastedData = clipboardData.getData("Text");
+    console.log(pastedData);
+    let pl = document.getElementById("isPlaylist").value === "on" ? true : false
+
+    log(`<span style='color: yellow'>Pasted:  ${pastedData} | isPlaylist: ${pl}</span>`)
+        let start = Date.now()
+
+        new Toast({
+          message: `starting job: ${pastedData}`,
+          type: "success",
+          duration: 3000,
+        })
+    fetch("/start", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        links: [pastedData],
+        isPlaylist: pl,
+      }),
+    }).then(async (res) => {
+      res = await res.json();
+      console.log(res);
+      if (res.message === "success") {
+        let end = Date.now();
+        res.out?.forEach((x) => {
+          log(
+            `<span style='color: orange'>[yt-dlp]</span><span style='color: #fff'> > ${x}</span>`
+          );
+        });
+        log(
+          `<span style='color: green'>Finished downloading ${
+            res.links.length
+          }</span> - <span style='color: orange'>${(
+            (end - start) /
+            1000
+          ).toFixed(2)}s elapsed</span>`
+        );
+        new Toast({
+          message: `Finished downloading ${res.links.length}`,
+          type: "success",
+          duration: 3000,
+        })
+      } else {
+        console.log("Error");
+        new Toast({message: 'Error: '+res?.message, type: 'danger'});
+      }
+    });
+  });
+};
+
+let clear = () =>
+  (document.getElementById(
+    "c"
+  ).innerHTML = `<span style="color: #fff">[downloader@${window.location.host}] welcome to downlooad</span>`);
+
+let log = (msg) => {
+  let block = document.querySelector("code");
+  block.innerHTML += `<br><span style="color: #fff">[downloader@${window.location.host}]</span> ${msg}`;
+};
+
+</script>
+<h1>paste data...</h1>
+<label for="playlist">download playlist</label>
+<input name="playlist" type="checkbox" id="isPlaylist" />
+<br>
+<small><a href="/">normal</a></small>
+<hr>
+<pre><code id="c"></code></pre>
+<button onclick='document.getElementById("c").innerHTML = `<span style="color: yellow;">[downloader@${window.location.host}] console cleared</span><br><span style="color: #fff">[downloader@${window.location.host}] welcome to downlooad</span>`;'>clear</button>

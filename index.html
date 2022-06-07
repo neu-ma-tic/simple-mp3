@@ -1,0 +1,80 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.css">
+<script src="https://cdn.jsdelivr.net/gh/ireade/Toast.js@master/dist/js/Toast.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/ireade/Toast.js@master/dist/css/Toast.min.css">
+<style>
+    body > div > div {
+        background-color: #0c0e15 !important;
+    }
+    body > div > div > p {
+        color: #0063cc;
+    }
+
+    .toastjs-btn {
+        background-color: #0063cc;
+        color: #fff;
+    }
+</style>
+<script>
+    window.onload = () => clear()
+    let clear = () => document.getElementById("c").innerHTML = `<span style="color: #fff">[downloader@${window.location.host}] welcome to downlooad</span>`
+
+    let log = (msg) => {
+        let block = document.querySelector("code")
+        block.innerHTML += `<br><span style="color: #fff">[downloader@${window.location.host}]</span> ${msg}`
+    }
+    let start = () => {
+        // make button disabled
+        document.getElementById("st").disabled = true;
+        document.getElementById("links").disabled = true;
+        log("<span style='color: yellow'>Starting. . .</span>")
+        document.getElementById("links").value?.split("\n").forEach(x => {
+            log(`<span style='color: #fff'>>  ${x}</span>`)
+        })
+
+        let pl = document.getElementById("isPlaylist").value === "on" ? true : false
+        let start = Date.now()
+        fetch("/start", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "links": document.getElementById("links").value?.split("\n"),
+                "isPlaylist": pl
+            })
+        }).then(async res => {
+            res = await res.json();
+            console.log(res)
+            if (res.message === "success") {
+                let end = Date.now()
+                document.getElementById("st").disabled = false
+                document.getElementById("links").disabled = false;
+                document.getElementById("links").value = ""
+                res.out?.forEach(x => {
+                    log(`<span style='color: orange'>[yt-dlp]</span><span style='color: #fff'> > ${x}</span>`)
+                })
+                log(`<span style='color: green'>Finished downloading ${res.links.length}</span> - <span style='color: orange'>${((end - start) / 1000).toFixed(2)}s elapsed</span>`)
+                new Toast({
+          message: `Finished downloading ${res.links.length}`,
+          type: "success",
+          duration: 3000,
+        }).show();
+            } else {
+                new Toast({message: 'Error: '+res?.message, type: 'danger'});
+                console.log("Error");
+            }
+        });
+    }
+</script>
+<label>urls</label>
+<textarea name="links" id="links" cols="70" rows="10"></textarea>
+<label for="playlist">download playlist</label>
+<input name="playlist" type="checkbox" id="isPlaylist" />
+<br>
+<button id="st" onclick="start()">start</button>
+<br>
+<small><a href="/?p=1">paste</a></small>
+<hr>
+<br>
+<pre><code id="c"></code></pre>
+<button onclick='document.getElementById("c").innerHTML = `<span style="color: yellow;">[downloader@${window.location.host}] console cleared</span><br><span style="color: #fff">[downloader@${window.location.host}] welcome to downlooad</span>`;'>clear</button>
